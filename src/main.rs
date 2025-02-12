@@ -2,6 +2,7 @@ use std::io;
 use std::fs;
 use std::io::Read;
 use colored::Colorize;
+use std::collections::HashMap;
 
 // Max guesses 5
 #[derive(Clone)]
@@ -22,15 +23,20 @@ impl Game {
     fn start(&self) {
         self.intro();
         let mut guesses: Vec<WordGuess> = vec![];
-        for _i in 0..5 {
-            let word_guess: WordGuess = self.guess(&guesses);
-            guesses.push(word_guess.clone());
-
-            self.render(&guesses);
-            if word_guess.is_correct == true {
-                println!("Guessed in {}.", _i);
-                break
-            }
+        if || -> bool {
+            for _i in 0..5 {
+                let word_guess: WordGuess = self.guess(&guesses);
+                guesses.push(word_guess.clone());
+    
+                self.render(&guesses);
+                if word_guess.is_correct == true {
+                    println!("Guessed in {}.", _i+1);
+                    return true
+                }
+            };
+            false
+        }() == false {
+            println!("{}", self.word)
         }
     }
     fn render(&self, word_guess: &Vec<WordGuess>) {
@@ -76,7 +82,7 @@ impl Game {
         let guess_chars: Vec<char> = guess.chars().map(|x| x).collect();
         
         let mut states: Vec<CharState> = vec![];
-
+        
         // Iterate through 5 characters through the correct word and the guess, and compare based on the rules
         for i in 0..5 {
             let c_char = correct_chars[i];
@@ -122,7 +128,7 @@ enum CharState {
 }
 
 fn get_words() -> Vec<String> {
-    let mut word_file = fs::File::open("wordlist.txt").unwrap();
+    let mut word_file = fs::File::open("fixedwordlist.txt").unwrap();
     let mut filebuf: String = String::new();
     let _ = word_file.read_to_string(&mut filebuf);
     let lines: Vec<String> = filebuf.lines().map(|x| x.to_owned()).collect();
