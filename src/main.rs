@@ -2,8 +2,7 @@ use std::io;
 use std::fs;
 use std::io::Read;
 use colored::Colorize;
-use std::collections::HashMap;
-
+use CharState::*;
 // Max guesses 5
 #[derive(Clone)]
 struct WordGuess {
@@ -51,10 +50,20 @@ impl Game {
         }
         false
     }
+    
+    fn is_already_guessed(&self, guess: &str, guesses: &Vec<WordGuess>) -> bool {
+        for word_guess in guesses {
+            if word_guess.guess == guess {
+                return true
+            }
+        }
+        false
+    }
+    
     // Ensure the guess is 5 characters then return it
-    fn guess(&self, word_guess: &Vec<WordGuess>) -> WordGuess {
-        let g = input();
-        if g.len() == 5 && self.guess_is_word(&g.as_str()) {
+    fn guess(&self, guesses: &Vec<WordGuess>) -> WordGuess {
+        let g: String = input().to_lowercase();
+        if g.len() == 5 && self.guess_is_word(&g.as_str()) && !self.is_already_guessed(&g, guesses) {
             if g == self.word {
                 WordGuess{
                     guess: g.clone(), 
@@ -72,29 +81,38 @@ impl Game {
         }
         else {
             // Re-render the game to only show formatted guesses, if invalid input
-            self.render(word_guess);
-            self.guess(word_guess)
+            self.render(&guesses);
+            self.guess(&guesses)
         }
     }
     // Return an array of 5 CharStates based on the guess in reference to the word
-    fn get_guess_states(&self, guess: &str) -> Vec<CharState>{
+    fn get_guess_states(&self, guess: &str) -> Vec<CharState> {
+        // Character vectors
         let correct_chars: Vec<char> = self.word.chars().map(|x| x).collect();
         let guess_chars: Vec<char> = guess.chars().map(|x| x).collect();
         
-        let mut states: Vec<CharState> = vec![];
-        
-        // Iterate through 5 characters through the correct word and the guess, and compare based on the rules
-        for i in 0..5 {
-            let c_char = correct_chars[i];
-            let g_char = guess_chars[i];
-            if g_char == c_char {
-                states.push(CharState::InPlace);
+        // Default states vector of Not
+        let mut states: Vec<CharState> = vec![Not, Not, Not, Not, Not];
+
+        // Search by characters in the correct word
+        for char in correct_chars.as_slice() {
+            let chars_in_correct: Vec<&char> = correct_chars.iter().filter(|c| **c == *char).collect();
+            let mut count = chars_in_correct.len() as i32;
+
+            // First pass try to find exact matches
+            for i in 0..5 {
+                if *&guess_chars[i] == *&correct_chars[i] && *&states[i] == Not && count > 0 {
+                    states[i] = InPlace;
+                    count -= 1;
+                }
             }
-            else if correct_chars.contains(&g_char) {
-                states.push(CharState::InWord);
-            }
-            else {
-                states.push(CharState::Not)
+
+            // Second pass to try and find indirect matches, or Not
+            for i in 0..5 {
+                if *&guess_chars[i] == *char && *&states[i] == Not && count > 0 {
+                    states[i] = InWord;
+                    count -= 1;
+                }
             }
         }
         states
@@ -120,7 +138,7 @@ impl Game {
         formatted
     }
 }
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 enum CharState {
     Not,
     InWord,
