@@ -17,7 +17,7 @@ impl Game {
     fn intro(&self) {
         clear();
         println!("Welcome to non NYT affiliated word guessing game.");
-        println!("You will have 5 chances to guess the 5 letter word.");
+        println!("You will have 6 chances to guess the 5 letter word.");
     }
     fn start(&self) {
         self.intro();
@@ -41,7 +41,7 @@ impl Game {
     fn render(&self, word_guess: &Vec<WordGuess>) {
         clear();
         let max_index = *&word_guess.len() as i32;
-        for i in 0..5 {
+        for i in 0..6 {
             if i > max_index - 1 {
                 println!("_____");
             }
