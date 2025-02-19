@@ -40,12 +40,19 @@ impl Game {
     }
     fn render(&self, word_guess: &Vec<WordGuess>) {
         clear();
-        for guess in word_guess {
-            println!("{}", self.format_word(guess.guess.as_str(), &guess.char_state))
+        let max_index = *&word_guess.len() as i32;
+        for i in 0..5 {
+            if i > max_index - 1 {
+                println!("_____");
+            }
+            else {
+                let guess = &word_guess[i as usize];
+                println!("{}", self.format_word(guess.guess.as_str(), &guess.char_state))
+            }
         }
     }
     fn guess_is_word(&self, guess: &str) -> bool {
-        if get_words().contains(&guess.to_lowercase().to_owned()) {
+        if get_lines("5letter.txt").contains(&guess.to_lowercase().to_owned()) {
             return true
         }
         false
@@ -63,16 +70,16 @@ impl Game {
     // Ensure the guess is 5 characters then return it
     fn guess(&self, guesses: &Vec<WordGuess>) -> WordGuess {
         let g: String = input().to_lowercase();
-        if g.len() == 5 && self.guess_is_word(&g.as_str()) && !self.is_already_guessed(&g, guesses) {
+        if g.len() == 5 && self.guess_is_word(&g.as_str()) && !self.is_already_guessed(&g, &guesses) {
             if g == self.word {
-                WordGuess{
+                return WordGuess{
                     guess: g.clone(), 
                     char_state: self.get_guess_states(g.as_str()),
                     is_correct: true
                 }
             }
             else {
-                WordGuess{
+                return WordGuess{
                     guess: g.clone(), 
                     char_state: self.get_guess_states(g.as_str()),
                     is_correct: false
@@ -82,7 +89,7 @@ impl Game {
         else {
             // Re-render the game to only show formatted guesses, if invalid input
             self.render(&guesses);
-            self.guess(&guesses)
+            return self.guess(&guesses)
         }
     }
     // Return an array of 5 CharStates based on the guess in reference to the word
@@ -145,15 +152,15 @@ enum CharState {
     InPlace
 }
 
-fn get_words() -> Vec<String> {
-    let mut word_file = fs::File::open("fixedwordlist.txt").unwrap();
+fn get_lines(path: &str) -> Vec<String> {
+    let mut word_file = fs::File::open(path).unwrap();
     let mut filebuf: String = String::new();
     let _ = word_file.read_to_string(&mut filebuf);
     let lines: Vec<String> = filebuf.lines().map(|x| x.to_owned()).collect();
     lines
 }
 fn random_word() -> String {
-    let lines: Vec<String> = get_words();
+    let lines: Vec<String> = get_lines("5letternoplurals.txt");
     let randi = rand::random_range(0..lines.len());
     lines[randi].clone()
 }   
